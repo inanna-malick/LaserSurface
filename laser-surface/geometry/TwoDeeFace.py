@@ -82,23 +82,6 @@ class TwoDeeFace(object):
         self.addEdge(SimpleEdge(rt_slot, rb_slot, 5))
         
         
-        
-    """
-    def drawSlits(self, tabVertA, tabVertB, slotLen):
-        downwardAngle = (tabVertB-tabVertA).angle + 90
-        mp = (tabVertA + tabVertB) / 2
-        p1 = mp.plusPolar( 0.25, downwardAngle - 90)
-        p2 = mp.plusPolar( 0.25, downwardAngle + 90)
-        lt_slot = p1.plusPolar( 0.1, downwardAngle)
-        lb_slot = lt_slot.plusPolar( slotLen, downwardAngle)
-        rt_slot = p2.plusPolar( 0.1, downwardAngle)
-        rb_slot = rt_slot.plusPolar( slotLen, downwardAngle)
-        self.addEdge(SimpleEdge(rt_slot, rb_slot, 5))
-        self.addEdge(SimpleEdge(lt_slot, lb_slot, 5))
-    """
-
-
-
     def buildEdge(self, threeDeeEdge, vertA, vertB, gapEdge):
         
         # build folded edge
@@ -118,10 +101,6 @@ class TwoDeeFace(object):
         cornerVertA = vertA.plusPolar(threeDeeEdge.previous.vertB.distance(threeDeeEdge.previous.tabVertB), cornerVertAngleA)
         edgeCornerEdgeA = SimpleEdge(vertA, cornerVertA, color=constants.colors.cuts)
         self.addEdge(edgeCornerEdgeA)
-        
-        
-
-        
         
 
         cornerTabEdge = SimpleEdge(cornerVertA, tabVertA, color = constants.colors.perforations)
@@ -171,6 +150,7 @@ class TwoDeeFace(object):
         
         intersectionPointA = findIntersection(outertabA, outertabB, intersectionLinesA)
         
+        lowerIntersectionPointA = findIntersection(tabVertA, outertabA, intersectionLinesA)
         
         #angle between corner-tab line and tab-triangle line (NEED TERMINOLOGY THAT IS BETTER NOW PLS)
         tabAngle = (vertB-tabVertB).angle
@@ -182,82 +162,31 @@ class TwoDeeFace(object):
         
         intersectionPointB = findIntersection(outertabB, outertabA, intersectionLinesB)
         
+        lowerIntersectionPointB = findIntersection(tabVertB, outertabB, intersectionLinesB)
+
         
         if intersectionPointA == None:
-            self.addEdge(SimpleEdge(tabVertA, outertabA, constants.colors.cuts))
+            if lowerIntersectionPointA == None:
+                lowerIntersectionPointA = tabVertA
+                print("a1")
+            else:
+                print("a2")
+            self.addEdge(SimpleEdge(lowerIntersectionPointA, outertabA, constants.colors.cuts))
             intersectionPointA = outertabA
             
         if intersectionPointB == None:
-            self.addEdge(SimpleEdge(tabVertB, outertabB, constants.colors.cuts))
+            if lowerIntersectionPointB == None:
+                lowerIntersectionPointB = tabVertB
+                print("b1")
+            else:
+                print("b2")
+            self.addEdge(SimpleEdge(lowerIntersectionPointB, outertabB, constants.colors.cuts))
             intersectionPointB = outertabB
 
         #outer tab
         self.addEdge(SimpleEdge(intersectionPointA, intersectionPointB, constants.colors.cuts))
 
 
-        '''
-        midtabA = tabVertA.plusPolar( constants.EDGE_OUT_LEN, reinfAngle)
-        
-        midtabB = tabVertB.plusPolar(  constants.EDGE_OUT_LEN, reinfAngle)                
-        
-        outertabA = tabVertA.plusPolar( constants.EDGE_OUT_LEN * 2, reinfAngle)
-        self.addEdge(SimpleEdge(tabVertA, outertabA, constants.colors.cuts))
-        
-        outertabB = tabVertB.plusPolar(  constants.EDGE_OUT_LEN * 2, reinfAngle)
-        self.addEdge(SimpleEdge(tabVertB, outertabB, constants.colors.cuts))
-        
-        
-        innertabA = outertabA.plusPolar( constants.TAB_WIDTH, (outertabB-outertabA).angle)
-        self.addEdge(SimpleEdge(outertabA, innertabA, constants.colors.cuts))
-
-        
-        innertabB = outertabB.plusPolar( constants.TAB_WIDTH, (outertabA-outertabB).angle)
-        self.addEdge(SimpleEdge(outertabB, innertabB, constants.colors.cuts))
-        
-        
-        innerEdgeA = innertabA.plusPolar( constants.EDGE_OUT_LEN, 180 + reinfAngle)
-        self.addEdge(SimpleEdge(innerEdgeA, midtabA, constants.colors.perforations))
-        self.addEdge(SimpleEdge(innerEdgeA, innertabA, constants.colors.cuts))
-
-        innerEdgeB = innertabB.plusPolar( constants.EDGE_OUT_LEN, 180 + reinfAngle)
-        self.addEdge(SimpleEdge(innerEdgeB, midtabB, constants.colors.perforations))
-        self.addEdge(SimpleEdge(innerEdgeB, innertabB, constants.colors.cuts))
-        
-        self.addEdge(SimpleEdge(innerEdgeA, innerEdgeB, constants.colors.cuts))
-        
-        self.drawSlit(innerEdgeA, midtabA, constants.SLOT_LEN)        
-        self.drawSlit(innerEdgeB, midtabB, constants.SLOT_LEN)          
-        self.drawSlit(midtabA, innerEdgeA, constants.SLOT_LEN)        
-        self.drawSlit(midtabB, innerEdgeB, constants.SLOT_LEN)        
-        '''
-        
-        '''
-        innertabA = outertabA.plusPolar( constants.TAB_WIDTH, (outertabB-outertabA).angle)
-        innertabB = outertabB.plusPolar( constants.TAB_WIDTH, (outertabA-outertabB).angle)
-        
-        self.drawSlit(outertabA, innertabA, constants.SLOT_LEN)        
-        self.drawSlit(innertabB, outertabB, constants.SLOT_LEN)   
-                
-        #extraForSlots = 0.1 # each side
-        
-        #midpoint of tab edge, projected onto edge
-        edgePointA = tabVertA.plusPolar( constants.EDGE_OUT_LEN, (vertB-vertA).angle+ 90)
-        #edgePointA2 = edgePointA.plusPolar( extraForSlots, (vertA-vertB).angle)
-        slotPointA = edgePointA.plusPolar( constants.TAB_WIDTH, (vertB-vertA).angle)
-        #slotPointA2 = slotPointA.plusPolar( extraForSlots, (vertB-vertA).angle)
-        #self.addEdge(SimpleEdge(edgePointA2, slotPointA2, 5))
-        self.drawSlit(slotPointA, edgePointA, constants.SLOT_LEN)        
-        
-        edgePointB = tabVertB.plusPolar( constants.EDGE_OUT_LEN, (vertB-vertA).angle+ 90)
-        #edgePointB2 = edgePointB.plusPolar( extraForSlots, (vertB-vertA).angle)
-        slotPointB = edgePointB.plusPolar( constants.TAB_WIDTH, (vertA-vertB).angle)
-        #slotPointB2 = slotPointB.plusPolar( extraForSlots, (vertA-vertB).angle)
-
-        #self.addEdge(SimpleEdge(edgePointB2, slotPointB2, 5))
-        self.drawSlit(edgePointB, slotPointB, constants.SLOT_LEN)        
-            
-        '''
-            
           
         self.drawSlit(tabVertA, tabVertB, constants.SLOT_LEN)        
         self.drawSlit(tabVertB, tabVertA, constants.SLOT_LEN)        
@@ -326,7 +255,7 @@ class TwoDeeFace(object):
         
         
         
-        # return the two possible lines that the tab line could intersect with
+        # return the three possible lines that the tab line could intersect with
         return ((tabPoint, outerSlit), (innerSlit, outerSlit), (old_cornerPoint, innerSlit))
 
 
@@ -411,6 +340,9 @@ class LineEquation():
         dX = pointB.x -pointA.x
         dY = pointB.y - pointA.y
         
+        if dX == 0:
+            dX = 0.000001
+            
         slope = dY / dX
         # y = mx + b
         # b = y - mx

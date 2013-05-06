@@ -5,7 +5,6 @@ a 3d point combined with its index from the source file as an alternative to com
 from geometry.Point import Point
 from geometry import  constants, sdxf
 import planar
-import math
 from geometry.TwoDeeFace import DrawnText, buildCornerSlit
 import os
 import functools
@@ -277,43 +276,6 @@ class ObjVertex(Point):
         return changeMade
    
 
-    
-    
-    def buildFaceLinkedList(self):
-        root = None
-        
-        faceslocal = self.faces[:]
-        
-        face0 = faceslocal[0]
-        for edge in face0.edges:
-            if edge.vertB == self:
-                assert root == None
-                root = faceListEntry(EdgeView(edge, False), face0, EdgeView(edge.next, True))
-                faceslocal.remove(face0)
-                
-        
-        while len(faceslocal) > 0:
-            for face in faceslocal:
-                for edge in face.edges:
-                    if edge.vertB == self: # check if this triangle can be added to the end of the list
-                        if edge == root.last.secondEdge:
-                            root.append(faceListEntry(EdgeView(edge, False), face, EdgeView(edge.next,True)))
-                            faceslocal.remove(face)
-
-            for face in faceslocal:
-                for edge in face.edges:
-                    if edge.vertA == self: # check if this triangle can be added to the begining of the list
-                        if edge == root.first.firstEdge:
-                            root.prepend(faceListEntry(EdgeView(edge.previous, False), face, EdgeView(edge, True)))
-                            faceslocal.remove(face)
-        
-        
-        #check if list should be circular
-        if root.first.firstEdge == root.last.lastEdge:
-            root.first.before = root.last
-            root.last.after = root.first    
-                
-        self.faceLL = root
 
 
     
@@ -372,69 +334,8 @@ class ObjVertex(Point):
                 edgeViews.add(ev)
                     
         self.edges = edgeViews
-        
-    '''
-    # instead of taking index, iterate over edges while their sum angle (plus extra edge for connection) is less than <constant>. for now, use 270
-    def buildVerts2DSegment(self, firstIdx, lastIdx):        
-        
-        #partitionFaceList_from_n(self.faceList, 0)
-        
-        vc = vertexCorners()
-        vc.angle = 0
-        
-        vc.addAnnotation(self.index, planar.Point(0,0), 0)  
 
-        
-        edge0 = self.faceList[firstIdx].firstEdge
-        length = self.distance(edge0.getTabVert())
-        
-        endPoint = planar.Vec2.polar(vc.angle, length)
-        vc.lastPoint = endPoint
-        vc.addEdgeLine((0, 0), (endPoint.x, endPoint.y))
-        
-        #iterate over edges, keep going while other edge in contact with point has a connected edge
-        for face in self.faceList[firstIdx:lastIdx+1]:
-            vc.consumeFace(face)
-            
-            
-        # only if this segment goes to the end
-        if lastIdx == (len(self.faceList) - 1):
-            # if true, the circle of corners is linked, and we must draw one more edge
-            if self.faceList[0].firstEdge == self.faceList[len(self.faceList) -1].secondEdge:
-                vc.consumeFace(self.faceList[0])       
-        
-        return vc
-    '''
     
-    
-    def buildVerts2D_LinkedList(self, root):
-        '''
-        foo = functools.reduce(lambda x, y: x+y.angle, faceList, 0)
-        assert foo < 360
-        '''
-        
-        vc = vertexCorners()
-        vc.angle = 0
-        
-        vc.addAnnotation(self.index, planar.Point(0,0), 0)
-        
-        edge0 = root.first.firstEdge
-        
-        length = self.distance(edge0.getTabVert())
-        
-        endPoint = planar.Vec2.polar(vc.angle, length)
-        vc.lastPoint = endPoint
-        vc.addEdgeLine((0, 0), (endPoint.x, endPoint.y))
-
-        #iterate over edges, keep going while other edge in contact with point has a connected edge
-        face = root
-        while face != None:
-            vc.consumeFace(face)
-            face = face.next
-
-        assert vc.angle < 360
-            
-        return vc
     
     
     def buildVerts2D(self, faceList):
@@ -463,45 +364,10 @@ class ObjVertex(Point):
             
         return vc
 
-    """
-    def buildVerts2D(self):
-        #partitionFaceList_from_n(self.faceList, 0)
 
-        
-        
-        vc = vertexCorners()
-        vc.angle = 0
-        
-        vc.addAnnotation(self.index, planar.Point(0,0), 0)  
-        
-        edge0 = self.faceList[0].firstEdge
-        
-        length = self.distance(edge0.getTabVert())
-        
-        endPoint = planar.Vec2.polar(vc.angle, length)
-        vc.lastPoint = endPoint
-        vc.addEdgeLine((0, 0), (endPoint.x, endPoint.y))
-
-        #iterate over edges, keep going while other edge in contact with point has a connected edge
-        for face in self.faceList:
-            vc.consumeFace(face)
-
-            
-        # if true, the circle of corners is linked, and we must draw one more edge
-        if self.faceList[0].firstEdge == self.faceList[len(self.faceList) -1].secondEdge:
-            vc.consumeFace(face)
-      
-            
-        return vc
-    """
-        
-        
     def buildCornerPointSet(self):
         return map(lambda x: [x.getVert(), x.getTabVert(), x.getCornerVert()], self.edges)
-        
-        
-        
-        
+
                 
     def __str__(self):
         return "point:(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ")"        
@@ -511,32 +377,19 @@ class ObjVertex(Point):
 
 
 def buildVerts(vertList, directory):    
-    lineLists = []
-    
-    
-    
+    results = [] 
     for v in vertList:
-        '''
-        if len(v.faceList) > 3:
-            #midpoint is supposed to overlap
-            midPoint = math.floor((len(v.faceList) -1) / 2)
-            #print("midpoint: " + str(midPoint))
-            lineLists.append(v.buildVerts2DSegment(0, midPoint))
-            lineLists.append(v.buildVerts2DSegment(midPoint, len(v.faceList)-1))
-        else:
-        '''
-        
-        segments = partitionFaceList_from_n(v.faceList, 0)
+        segments = partitionFaceList(v.faceList)
         for segment in segments:
-            lineLists.append(v.buildVerts2D(segment))
+            results.append(v.buildVerts2D(segment))
         
     d = sdxf.Drawing()
     
     offset = 0
 
-    for llist in lineLists:
-        llist.draw(d, planar.Point(offset, 0))  
-        offset = (offset - llist.minX) + llist.maxX + 5
+    for result in results:
+        result.draw(d, planar.Point(offset, 0))  
+        offset = (offset - result.minX) + result.maxX + 5
             
     d.saveas(os.path.join(directory, "corners"))
         
@@ -624,55 +477,15 @@ class vertexCorners():
   
         self.lastPoint = endPoint
 
-#NOT CIRCULAR YET
 class faceListEntry():
-    def __init__(self, firstEdge, face, secondEdge, before=None, after=None):
-        self.before = before
-        self.after = after
+    def __init__(self, firstEdge, face, secondEdge):
         self.firstEdge = firstEdge
         self.face = face
         self.secondEdge = secondEdge
-            
-    def __len__(self):
-        total = 1
-        if self.next != None:
-            total += len(self.next)
-        return total
-
-    def prepend(self, n):
-        if self.before == None:
-            self.before = n
-            n.after = self
-        else:
-            self.before.append(n)        
-    
-    def append(self, n):
-        if self.after == None:
-            self.after = n
-            n.before = self
-        else:
-            self.after.append(n)
-
-    @property
-    def last(self):
-        if self.after == None:
-            return self
-        else:
-            return self.after.last
-
-
-    @property
-    def first(self):
-        if self.before == None:
-            return self
-        else:
-            return self.before.first
 
     @property
     def angle(self):  
         return self.firstEdge.getVert().angleThreePoints(self.firstEdge.getTabVert(), self.secondEdge.getTabVert())
-
-
     
     def __str__(self):
         return "face:"+self.face.id      
@@ -680,119 +493,48 @@ class faceListEntry():
     def __repr__(self):
         return '{id}:{number:.{digits}f}'.format(number=self.angle, digits=0, id=self.face.id)
             
-    #def angle(self):
-    #    return self.firstEdge.getVert().angleThreePoints(self.firstEdge.getOppositeVert(), self.secondEdge.getOppositeVert())
-    
-"""
-FUCK IT I'LL DO THIS LATER
-#list of objects with angle, create overlapping slices with sum angle < 360,  min possible slice count
+
+
+
+#return angle cost to add this index.
+def costToAdd(faceList, index):
+    pass 
+        
 def partitionFaceList(faceList):
-    possible_results = []
-    for n in range(len(faceList)):
-        possible_results.append(partitionFaceList_from_n(faceList, n))
-    
-    maxLen = len(max(possible_results, key=lambda x:len(x)))
-    minLen = len(min(possible_results, key=lambda x:len(x)))
-    '''
-    for result in possible_results:
-        print(result[0][0])
-    '''
-    if maxLen != minLen:
-        print("maxPartition:{max}, minPartition:{min}".format(max=maxLen, min=minLen))
-"""
-    
-        
-def partitionFaceList_from_n(faceList, n):
     list_len = len(faceList) 
-    assert list_len > n
-    rotated_list = faceList[n:] + faceList[:n]
 
-    list_of_lists = []
-    
-    print("splitting list: {}".format(rotated_list))
-    
+    results = []
+
     group = []
-    group.append(rotated_list[0])
-    angleSum = rotated_list[0].angle
-
+    #group.append(faceList[0])
+    #angleSum = faceList[0].angle
+    angleSum = 0
     
     for i in range(list_len):
         # check if previously added + current + next is under limit
-        if ( angleSum + rotated_list[(i+1)%list_len].angle ) > 360: #can't add the current triangle
-            #add the current one, but only as a tab to link the two
-
+        if ( angleSum + faceList[i].angle ) > 100: #can't add the current triangle
             #done with this group, add it to result list and init new group with this edge for overlap
-            list_of_lists.append(group)
-            print("result(a): {}".format(group))
+            results.append(group)
             group = []
-            group.append(rotated_list[i]) # intentional overlap by 1 triangle
-            group.append(rotated_list[(i+1)%list_len])
-            angleSum = rotated_list[i].angle
-
-            
+            group.append(faceList[i - 1]) # intentional overlap by 1 triangle
+            group.append(faceList[i])
+            angleSum = faceList[i].angle + faceList[i-1].angle
         else:
-            group.append(rotated_list[(i+1)%list_len])
-            angleSum += rotated_list[(i+1)%list_len].angle
+            group.append(faceList[i])
+            angleSum += faceList[i].angle
 
     
     if len(group) > 0:
-        if len(group) == 1:
-            group.append(rotated_list[0])
-        list_of_lists.append(group)
-        print("result(b): {}".format(group))
+        if faceList[0].firstEdge == faceList[-1].secondEdge:
+            group.append(faceList[0])
+        results.append(group)
 
-    for result in list_of_lists:
+    for result in results:
         foo = functools.reduce(lambda x, y: x+y.angle, result, 0)
         assert foo < 360
         
-    return list_of_lists
-    
-'''
-def partitionFaceLinkedList(root):
-    list_len = len(root) 
+    return results
 
-    list_of_lists = []
-    
-    
-    group = root.copyNode()
-    group.append(rotated_list[0])
-    angleSum = rotated_list[0].angle
-
-    
-    for i in range(list_len):
-        # check if previously added + current + next is under limit
-        if ( angleSum + rotated_list[(i+1)%list_len].angle ) > 360: #can't add the current triangle
-            #add the current one, but only as a tab to link the two
-
-            #done with this group, add it to result list and init new group with this edge for overlap
-            list_of_lists.append(group)
-            group = []
-            group.append(rotated_list[i]) # intentional overlap by 1 triangle
-            group.append(rotated_list[(i+1)%list_len])
-            angleSum = rotated_list[i].angle
-
-            
-        else:
-            group.append(rotated_list[(i+1)%list_len])
-            angleSum += rotated_list[(i+1)%list_len].angle
-
-    
-    if len(group) > 0:
-        if len(group) == 1:
-            group.append(rotated_list[0])
-        list_of_lists.append(group)
-
-    for result in list_of_lists:
-        foo = functools.reduce(lambda x, y: x+y.angle, result, 0)
-        assert foo < 360
-        
-    return list_of_lists    
-    
-'''
-    
-    
-    
-    
     
     
     
