@@ -3,12 +3,13 @@ Created on Aug 15, 2012
 
 @author: kinsp1
 '''
-from geometry.lcAlgObjReader import lcAlgObjReader
 from geometry import constants
+from geometry.constants import dimensions
+from geometry.lcAlgObjReader import lcAlgObjReader
 import os
-import time
-import sys
 import shutil
+import sys
+import time
 
 if __name__ == '__main__':
     
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     
     print("BEGIN")
     
-    objReader = lcAlgObjReader(srcObjName, constants.SCALE)
+    objReader = lcAlgObjReader(srcObjName, dimensions.scale)
     objReader.readFile(open(os.path.join(os.pardir, "input/" + srcObjName + ".obj"), 'r'))
     
     

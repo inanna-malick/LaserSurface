@@ -176,7 +176,6 @@ class Edge(object):
             
         if self.vertB == other.vertA or self.vertB == other.vertB:
             lineVector = self.plane.intersectionVector(other.plane, self.vertB)
-            #print(lineVector)
             return self.baseEdge.sharedEdgeNormal.multiplyConst(-1).align(lineVector)
         
         raise Exception()
@@ -207,9 +206,6 @@ class Edge(object):
         p3 = v1 + self.vertA
         plane = Plane(self.vertA, self.vertB, p3)
         
-        basePlane = self.baseEdge.plane
-        #assert basePlane == plane
-        
         return plane
         
     
@@ -218,9 +214,8 @@ class Edge(object):
         #check edge and tab lines are parallel
         edgeVector = self.vertA.vectorToPoint(self.vertB)
         tabVector = self.tabVertA.vectorToPoint(self.tabVertB)
-        angle = round ( edgeVector.angle(tabVector), 4 )
         #tab and edge should always be parallel, and in the same direction
-        assert (angle == 0)
+        assert round ( edgeVector.angle(tabVector), 4 ) == 0
 
     
     def linkEdge(self, edgeToLink):
@@ -232,12 +227,9 @@ class Edge(object):
         edgeToLink.otherEdge = self
         self.otherEdge = edgeToLink
         
-        '''ASSERTIONS
-        '''
-        angle = normal.angle(self.face.normalV)
-        assert angle < 90
-        angle = normal.angle(edgeToLink.face.normalV)
-        assert angle < 90
+
+        assert normal.angle(self.face.normalV) < 90
+        assert normal.angle(edgeToLink.face.normalV) < 90
         
 
     

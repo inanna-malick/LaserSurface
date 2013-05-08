@@ -9,8 +9,6 @@ from geometry.SimpleEdge import SimpleEdge
 from geometry import constants
 from planar import Point
 
-#from geometry.PlanarUtils import twoD_midPoint, twoD_lineAngle
-
 
 class DrawnText():
     def __init__(self, text, height, startPoint, angle=0):
@@ -47,7 +45,7 @@ class TwoDeeFace(object):
         # draw center annotation
         midpoint = (twoDPoint01+twoDPoint12)/2        
         midpoint = (midpoint+twoDPoint20)/2        
-        centerAnnotation = DrawnText(initialEdge0.faceId, constants.CENTER_ANNOTATION_HEIGHT, midpoint)
+        centerAnnotation = DrawnText(initialEdge0.faceId, constants.dimensions.large_text_size, midpoint)
         self.addAnnotation(centerAnnotation)
         
         self.buildEdge(initialEdge0, twoDPoint20, twoDPoint01, False)
@@ -122,29 +120,18 @@ class TwoDeeFace(object):
         
 
 
-
-        
-        '''
-        1. get line tabA-B, find intersection with corner
-        '''
-        
-
-        #if(threeDeeEdge.connectedId != "n/a"):  
-            
-        #if threeDeeEdge.baseEdge.reinforced == None:
         reinfAngle = (tabVertB-tabVertA).angle - 90
         
         
         # outer tabs
-        outertabA = tabVertA.plusPolar( constants.EDGE_OUT_LEN, reinfAngle)
-        outertabB = tabVertB.plusPolar(  constants.EDGE_OUT_LEN , reinfAngle)        
-        #self.addEdge(SimpleEdge(outertabA, outertabB, constants.colors.cuts))
+        outertabA = tabVertA.plusPolar( constants.dimensions.tab_width, reinfAngle)
+        outertabB = tabVertB.plusPolar(  constants.dimensions.tab_width , reinfAngle)        
         
         #angle between corner-tab line and tab-triangle line (NEED TERMINOLOGY THAT IS BETTER NOW PLS)
         tabAngle = (vertA-tabVertA).angle
         cornerAngle =  (cornerVertA-tabVertA).angle
         tab_cornerAngle = tabAngle - cornerAngle
-        #draw us a line A
+
         pt2 = tabVertA.plusPolar( edgeTabEdgeA.magnitude, (cornerVertA-tabVertA).angle - tab_cornerAngle )
         intersectionLinesA = self.buildReflectedCorner(pt2, cornerVertA, tabVertA, tabVertB)
         
@@ -156,7 +143,7 @@ class TwoDeeFace(object):
         tabAngle = (vertB-tabVertB).angle
         cornerAngle =  (cornerVertB-tabVertB).angle
         tab_cornerAngle = tabAngle - cornerAngle
-        #draw us a line B
+
         pt2 = tabVertB.plusPolar( edgeTabEdgeB.magnitude, (cornerVertB-tabVertB).angle - tab_cornerAngle )
         intersectionLinesB = self.buildReflectedCorner(pt2, cornerVertB, tabVertB, tabVertA)
         
@@ -188,8 +175,8 @@ class TwoDeeFace(object):
 
 
           
-        self.drawSlit(tabVertA, tabVertB, constants.SLOT_LEN)        
-        self.drawSlit(tabVertB, tabVertA, constants.SLOT_LEN)        
+        self.drawSlit(tabVertA, tabVertB, constants.dimensions.brass_pin_slot_length)        
+        self.drawSlit(tabVertB, tabVertA, constants.dimensions.brass_pin_slot_length)        
 
         
         # build edge from tab to corner
@@ -205,19 +192,15 @@ class TwoDeeFace(object):
         self.addEdge(slitB)
 
         #for vertex-circle-linking
-        self.addAnnotation(DrawnText(threeDeeEdge.vertB.index, constants.EDGE_ANNOTATION_HEIGHT, vertB, 0))
+        self.addAnnotation(DrawnText(threeDeeEdge.vertB.index, constants.dimensions.small_text_size, vertB, 0))
         
                 
-        #if threeDeeEdge.baseEdge.reinforced != None:
         self.addEdge(SimpleEdge(tabVertA, tabVertB, color=constants.colors.perforations))
-        #else:
-        #self.addEdge(SimpleEdge(tabVertA, tabVertB, color=constants.colors.perforations))
-        #threeDeeEdge.baseEdge.reinforced = True
         
 
         # build annotation along tab edge to guarantee maximum space
-        textStartPoint = tabVertA.plusPolar( constants.EDGE_OUT_LEN + ((constants.EDGE_OUT_LEN - constants.EDGE_ANNOTATION_HEIGHT) / 2), (vertB-vertA).angle+ 90)
-        edgeAnnotation = DrawnText(text=threeDeeEdge.connectedId, height=constants.EDGE_ANNOTATION_HEIGHT, startPoint=textStartPoint, angle=(vertB-vertA).angle)
+        textStartPoint = tabVertA.plusPolar( constants.dimensions.tab_width + ((constants.dimensions.tab_width - constants.dimensions.small_text_size) / 2), (vertB-vertA).angle+ 90)
+        edgeAnnotation = DrawnText(text=threeDeeEdge.connectedId, height=constants.dimensions.small_text_size, startPoint=textStartPoint, angle=(vertB-vertA).angle)
         self.addAnnotation(edgeAnnotation)        
         
 
@@ -350,19 +333,9 @@ class LineEquation():
         
         self.slope = slope
         self.yIntercept = yIntercept
-        
-    # does point satisfy y = mx + b?
-    def isPointOnLine(self, point):
-        onLine = round(point.x * self.slope + self.yIntercept, 5) == round(point.y, 5)
-        #onSegment = (point < self.pointB and point > self.pointA) or (point > self.pointB and point < self.pointA)
-        
-        return onLine# and onSegment
 
             
     def intersectionWithLine(self, lineEq):
-        # m1x + b1 = m2x + b2
-        # m1x - m2x =b2 - b1
-        # (m1+m2) * x = b2-b1
         x = (lineEq.yIntercept - self.yIntercept) / (self.slope - lineEq.slope)
         y = self.slope * x + self.yIntercept
         return Point(x, y)
@@ -389,11 +362,7 @@ def findIntersection(oppositeEdgePoint, edgePoint, possibleIntersectionLines):
         pt = possible.intersectionWithLine(edgeLineEq)
         if isBetween(line[0], line[1], pt) and isBetween(oppositeEdgePoint, edgePoint, pt):
             return pt
-    
-    #return oppositeEdgePoint
-        
-    
-    
+
     
     
     

@@ -56,23 +56,14 @@ class lcAlgObjReader(OBJReader):
             
         for vertex in self.vertices:
             vertex.buildEdgeViews()
-            
-        
-        '''
-        changeMade = True
-        while changeMade:
-            changeMade = False
-            for vertex in self.vertices:
-                changeLocal = vertex.doPriorityPushback()
-                changeMade = changeMade or changeLocal        
-        '''
-        
+
+
+        # TODO: assign priority to changes, do urgent work first
         # give each vertex cluster a chance to make changes until none do
         changeMade = True
         while changeMade:
             changeMade = False
             for vertex in self.vertices:
-                # FIXME: will break, changes are checked against prev state then all run, can go over defined limits
                 changeLocal = vertex.doPushBackRound()
                 changeMade = changeMade or changeLocal
                 

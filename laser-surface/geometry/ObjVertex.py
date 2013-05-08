@@ -2,16 +2,16 @@
 '''
 a 3d point combined with its index from the source file as an alternative to comparing floats
 '''
+from geometry import sdxf
 from geometry.Point import Point
-from geometry import  constants, sdxf
-import planar
 from geometry.TwoDeeFace import DrawnText, buildCornerSlit
-import os
+from geometry.constants import dimensions, constraints
 import functools
+import os
+import planar
 
 # edge as viewed from vertex
 # useA true if vertA is this vertex, false if vertB is this vertex
-# advantage over meta-programming: edges can have N views, not just 1
 class EdgeView(object):
     def __init__(self, edge, useA):
         self.edge = edge
@@ -90,18 +90,18 @@ class EdgeView(object):
         '''
         # check length of tab against minimum
         if self.connectedId != "n/a":
-            if self.edge.tabMagnitude < constants.TAB_EDGE_MIN_LEN:
+            if self.edge.tabMagnitude < constraints.TAB_EDGE_MIN_LEN:
                 return False
         else:
-            if self.edge.tabMagnitude < constants.PUSH_BACK_INCREMENT:
+            if self.edge.tabMagnitude < dimensions.PUSH_BACK_INCREMENT:
                 return False
         '''
-        if self.edge.tabMagnitude < constants.TAB_EDGE_MIN_LEN:
+        if self.edge.tabMagnitude < constraints.min_tab_edge_len:
             return False        
         # check angle between edge and tabedge against minimum
         tabedgeV = self.getVert().vectorToPoint(self.getTabVert())
         edgeV = self.getVert().vectorToPoint(self.getOppositeVert())
-        if tabedgeV.angle(edgeV) < constants.EDGE_TABEDGE_MIN_ANGLE:
+        if tabedgeV.angle(edgeV) < constraints.EDGE_TABEDGE_MIN_ANGLE:
             return False
 
         # we made it!
@@ -113,16 +113,16 @@ class EdgeView(object):
     def pushBackAllowed_min(self):
         # check length of tab against minimum
         #if self.connectedId != "n/a":
-        #    if self.edge.tabMagnitude < constants.TAB_EDGE_MIN_LEN:
+        #    if self.edge.tabMagnitude < constraints.TAB_EDGE_MIN_LEN:
         #        return False
         #else:
-        if self.edge.tabMagnitude < constants.PUSH_BACK_INCREMENT:
+        if self.edge.tabMagnitude < dimensions.pushback_increment:
             return False
         
         # check angle between edge and tabedge against minimum
         tabedgeV = self.getVert().vectorToPoint(self.getTabVert())
         edgeV = self.getVert().vectorToPoint(self.getOppositeVert())
-        if tabedgeV.angle(edgeV) < constants.EDGE_TABEDGE_MIN_ANGLE:
+        if tabedgeV.angle(edgeV) < constraints.EDGE_TABEDGE_MIN_ANGLE:
             return False
 
         # we made it!
@@ -157,7 +157,6 @@ class ObjVertex(Point):
         changeMade2 = self.pushback_tabEdgesMinAngle()
         changeMade3 = self.pushBack_CornerLen()
         changeMade4 = self.pushBack_tabVertDist()
-        #print(changeMade1 or changeMade2 or changeMade3)
         return changeMade1 or changeMade2 or changeMade3 or changeMade4
     
 
@@ -173,9 +172,9 @@ class ObjVertex(Point):
             edgeVert = edge.getOppositeVert()
             tabVert = edge.getTabVert()
             angle = cornerVert.angleThreePoints(edgeVert, tabVert)
-            if (angle > constants.TAB_EDGE_MAX_ANGLE):
+            if (angle > constraints.TAB_EDGE_MAX_ANGLE):
                     if edge.pushBackAllowed():
-                        edge.pushBack(constants.PUSH_BACK_INCREMENT)
+                        edge.pushBack(dimensions.pushback_increment)
                         changeMade = True    
                         
         return changeMade
@@ -195,21 +194,21 @@ class ObjVertex(Point):
         for pair in pairs:
             edge1 = pair[0]
             edge2 = pair[1]
-            if edge1.getVert().angleThreePoints(edge1.getTabVert(), edge2.getTabVert()) < constants.MIN_TAB_TAB_ANGLE:
+            if edge1.getVert().angleThreePoints(edge1.getTabVert(), edge2.getTabVert()) < constraints.MIN_TAB_TAB_ANGLE:
                 #print(edge1.getVert().angleThreePoints(edge1.getTabVert(), edge2.getTabVert()))
 
                 if pair[0].pushBackAllowed():
-                    pair[0].pushBack(constants.PUSH_BACK_INCREMENT)       
+                    pair[0].pushBack(dimensions.pushback_increment)       
                     changeMade = True
                 if pair[1].pushBackAllowed():
-                    pair[1].pushBack(constants.PUSH_BACK_INCREMENT)
+                    pair[1].pushBack(dimensions.pushback_increment)
                     changeMade = True
 
         return changeMade
     
     
     
-    # pushback round. will apply pushback to each tabVert that is part of a corner edge with length less than constants.MIN_CORNER_EDGE_LEN
+    # pushback round. will apply pushback to each tabVert that is part of a corner edge with length less than constraints.MIN_CORNER_EDGE_LEN
     # prioritized, find ~5 edgeviews that are smallest edgeviews and pushback. repeat until it can't
     def pushBack_CornerLen_byPriority(self):
         changeMade = False
@@ -219,10 +218,10 @@ class ObjVertex(Point):
         
         for edge in self.edges:
             cornerLen = edge.getCornerLens()
-            if min(cornerLen) < constants.MIN_CORNER_EDGE_LEN:
+            if min(cornerLen) < constraints.min_corner_edge_length:
                 if edge.pushBackAllowed_min():
                     candidates.append( (min(cornerLen), edge) )
-                    #edge.pushBack(constants.PUSH_BACK_INCREMENT)
+                    #edge.pushBack(dimensions.PUSH_BACK_INCREMENT)
                     #changeMade = True
                 #else:
                 #    print(min(cornerLen))
@@ -230,7 +229,7 @@ class ObjVertex(Point):
         candidates.sort(key=lambda a: a[0])
       
         for i, c in zip(range(5), candidates):
-            c[1].pushBack(constants.PUSH_BACK_INCREMENT)
+            c[1].pushBack(dimensions.pushback_increment)
             changeMade = True
       
       
@@ -238,14 +237,14 @@ class ObjVertex(Point):
     
     
         
-    # pushback round. will apply pushback to each tabVert that is part of a corner edge with length less than constants.MIN_CORNER_EDGE_LEN
+    # pushback round. will apply pushback to each tabVert that is part of a corner edge with length less than constraints.MIN_CORNER_EDGE_LEN
     def pushBack_CornerLen(self):
         changeMade = False
         for edge in self.edges:
             cornerLen = edge.getCornerLens()
-            if min(cornerLen) < constants.MIN_CORNER_EDGE_LEN:
+            if min(cornerLen) < constraints.min_corner_edge_length:
                 if edge.pushBackAllowed():
-                    edge.pushBack(constants.PUSH_BACK_INCREMENT)
+                    edge.pushBack(dimensions.pushback_increment)
                     changeMade = True
                 #else:
                     #print(min(cornerLen))
@@ -265,12 +264,12 @@ class ObjVertex(Point):
 
 
         for pair in pairs:
-            if getDist(pair) < constants.MIN_AROUND_VERTEX_POINT_DIST:
+            if getDist(pair) < constraints.MIN_AROUND_VERTEX_POINT_DIST:
                 if pair[0].pushBackAllowed():
-                    pair[0].pushBack(constants.PUSH_BACK_INCREMENT)       
+                    pair[0].pushBack(dimensions.pushback_increment)       
                     changeMade = True
                 if pair[1].pushBackAllowed():
-                    pair[1].pushBack(constants.PUSH_BACK_INCREMENT)
+                    pair[1].pushBack(dimensions.pushback_increment)
                     changeMade = True
                     
         return changeMade
@@ -340,8 +339,7 @@ class ObjVertex(Point):
     
     def buildVerts2D(self, faceList):
         
-        foo = functools.reduce(lambda x, y: x+y.angle, faceList, 0)
-        assert foo < 360
+        assert functools.reduce(lambda x, y: x+y.angle, faceList, 0) < 360
         
         vc = vertexCorners()
         vc.angle = 0
@@ -443,8 +441,7 @@ class vertexCorners():
 
     
     def addAnnotation(self, text, startPoint, angle=0):
-        self.annotations.append(DrawnText(text, constants.EDGE_ANNOTATION_HEIGHT, startPoint, angle))
-        #print(text)
+        self.annotations.append(DrawnText(text, dimensions.small_text_size, startPoint, angle))
         
     def addLine(self, start, end):
         self.lines.append((start, end))
@@ -459,7 +456,6 @@ class vertexCorners():
     
     def consumeFace(self, face):
         deltaAngle = face.firstEdge.getVert().angleThreePoints(face.firstEdge.getTabVert(), face.secondEdge.getTabVert())
-        
         assert deltaAngle == face.angle
         
         self.angle += deltaAngle
@@ -494,20 +490,12 @@ class faceListEntry():
         return '{id}:{number:.{digits}f}'.format(number=self.angle, digits=0, id=self.face.id)
             
 
-
-
-#return angle cost to add this index.
-def costToAdd(faceList, index):
-    pass 
-        
 def partitionFaceList(faceList):
     list_len = len(faceList) 
 
     results = []
 
     group = []
-    #group.append(faceList[0])
-    #angleSum = faceList[0].angle
     angleSum = 0
     
     for i in range(list_len):
@@ -530,8 +518,7 @@ def partitionFaceList(faceList):
         results.append(group)
 
     for result in results:
-        foo = functools.reduce(lambda x, y: x+y.angle, result, 0)
-        assert foo < 360
+        assert functools.reduce(lambda x, y: x+y.angle, result, 0) < 360
         
     return results
 

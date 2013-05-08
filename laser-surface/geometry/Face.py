@@ -4,11 +4,11 @@ Created on Aug 15, 2012
 @author: kinsp1
 '''
 
-from geometry.Point import Point
+from geometry.constants import dimensions
+from geometry import pyeuclid, constants
 from geometry.ObjEdge import Edge
+from geometry.Point import Point
 import math
-from geometry import pyeuclid
-from geometry import constants
 
 
 def normalFromPoints(vertA, vertB, vertC):
@@ -54,7 +54,7 @@ class Face(object):
 
     def buildObj(self, o):
         # build face
-        if constants.SKELETAL_OBJ_OUTPUT == False:
+        if not constants.output_skeleton_only:
             o.buildFace((self.edges[0].vertA, self.edges[1].vertA, self.edges[2].vertA))
         
         # build tabs
@@ -75,16 +75,6 @@ class Face(object):
         self.vi01 = self.normalV.align(self.edges[0].calculatePlaneIntersect(self.edges[1]).multiplyConst(-1.0))
         self.vi12 = self.normalV.align(self.edges[1].calculatePlaneIntersect(self.edges[2]).multiplyConst(-1.0))
         self.vi20 = self.normalV.align(self.edges[2].calculatePlaneIntersect(self.edges[0]).multiplyConst(-1.0))
-        
-        #assert that each has an angle of < 90 with vNormal
-        '''
-        a = self.vi01.angle(self.normalV)
-        assert 90 > a
-        a = self.vi12.angle(self.normalV)
-        assert 90 > a
-        a = self.vi20.angle(self.normalV)
-        assert 90 > a
-        '''
         
     @property
     def maxX(self):
@@ -130,7 +120,7 @@ class Face(object):
         
     def findEdgeLen(self, vi):
         angle = vi.angle(self.normalV.multiplyConst(-1.0))
-        l = abs(constants.EDGE_OUT_LEN / math.cos(math.radians(angle)))
+        l = abs(dimensions.tab_width / math.cos(math.radians(angle)))
         return l
     
     def shiftEdgeOrder(self):
@@ -153,16 +143,16 @@ class Face(object):
 
         
         if not self.edges[0].calculated:
-            self.edges[0].tabVertA = self.edges[0].baseEdge.sharedEdgeNormal.getEndPoint(self.p20, constants.EDGE_OUT_LEN)
-            self.edges[0].tabVertB = self.edges[0].baseEdge.sharedEdgeNormal.getEndPoint(self.p01, constants.EDGE_OUT_LEN)
+            self.edges[0].tabVertA = self.edges[0].baseEdge.sharedEdgeNormal.getEndPoint(self.p20, dimensions.tab_width)
+            self.edges[0].tabVertB = self.edges[0].baseEdge.sharedEdgeNormal.getEndPoint(self.p01, dimensions.tab_width)
         
         if not self.edges[1].calculated:
-            self.edges[1].tabVertA = self.edges[1].baseEdge.sharedEdgeNormal.getEndPoint(self.p01, constants.EDGE_OUT_LEN)
-            self.edges[1].tabVertB = self.edges[1].baseEdge.sharedEdgeNormal.getEndPoint(self.p12, constants.EDGE_OUT_LEN)
+            self.edges[1].tabVertA = self.edges[1].baseEdge.sharedEdgeNormal.getEndPoint(self.p01, dimensions.tab_width)
+            self.edges[1].tabVertB = self.edges[1].baseEdge.sharedEdgeNormal.getEndPoint(self.p12, dimensions.tab_width)
         
         if not self.edges[2].calculated:
-            self.edges[2].tabVertA = self.edges[2].baseEdge.sharedEdgeNormal.getEndPoint(self.p12, constants.EDGE_OUT_LEN)
-            self.edges[2].tabVertB = self.edges[2].baseEdge.sharedEdgeNormal.getEndPoint(self.p20, constants.EDGE_OUT_LEN)        
+            self.edges[2].tabVertA = self.edges[2].baseEdge.sharedEdgeNormal.getEndPoint(self.p12, dimensions.tab_width)
+            self.edges[2].tabVertB = self.edges[2].baseEdge.sharedEdgeNormal.getEndPoint(self.p20, dimensions.tab_width)        
 
 
         
