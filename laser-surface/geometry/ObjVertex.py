@@ -339,7 +339,7 @@ class ObjVertex(Point):
     
     def buildVerts2D(self, faceList):
         
-        assert functools.reduce(lambda x, y: x+y.angle, faceList, 0) < 360
+        #assert functools.reduce(lambda x, y: x+y.angle, faceList, 0) < 360
         
         vc = vertexCorners()
         vc.angle = 0
@@ -358,7 +358,7 @@ class ObjVertex(Point):
         for face in faceList:
             vc.consumeFace(face)
 
-        assert vc.angle < 360
+        #assert vc.angle < 360
             
         return vc
 
@@ -500,7 +500,7 @@ def partitionFaceList(faceList):
     
     for i in range(list_len):
         # check if previously added + current + next is under limit
-        if ( angleSum + faceList[i].angle ) > 100: #can't add the current triangle
+        if ( angleSum + faceList[i].angle ) > 360: #can't add the current triangle
             #done with this group, add it to result list and init new group with this edge for overlap
             results.append(group)
             group = []
@@ -516,9 +516,12 @@ def partitionFaceList(faceList):
         if faceList[0].firstEdge == faceList[-1].secondEdge:
             group.append(faceList[0])
         results.append(group)
-
+    
+    '''
+    print(results)
     for result in results:
         assert functools.reduce(lambda x, y: x+y.angle, result, 0) < 360
+    '''
         
     return results
 

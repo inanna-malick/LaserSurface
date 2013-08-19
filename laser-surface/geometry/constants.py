@@ -10,8 +10,8 @@ output_skeleton_only=False
 dimensions = struct()
 dimensions.brass_pin_slot_length=0.15
 dimensions.pushback_increment = 0.05
-dimensions.scale = 3
-dimensions.tab_width = 0.5
+dimensions.scale = 0.1
+dimensions.tab_width = 0.75
 dimensions.large_text_size = 0.5
 dimensions.small_text_size = 0.3
 
@@ -20,7 +20,8 @@ dimensions.small_text_size = 0.3
 '''CONSTRAINTS'''
 constraints = struct()
 constraints.min_tab_edge_len = 1
-constraints.min_corner_edge_length = 1
+constraints.min_corner_edge_length = 3
+
 
 constraints.MIN_AROUND_VERTEX_POINT_DIST = 2
 
